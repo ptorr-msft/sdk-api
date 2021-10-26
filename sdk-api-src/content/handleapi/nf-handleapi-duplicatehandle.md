@@ -183,7 +183,7 @@ If the process that calls
 
 <b>DuplicateHandle</b> can be used to duplicate a handle between a 32-bit process and a 64-bit process. The resulting handle is appropriately sized to work in the target process. For more information, see <a href="https://docs.microsoft.com/windows/desktop/WinProg64/process-interoperability">Process Interoperability</a>.
 
-<b>DuplicateHandle</b> can duplicate handles to the following types of objects.
+Not all "handles" can be duplicated with <b>DuplicateHandle</b>. Only the following types of objects can have their handles duplicated:
 
 <table>
 <tr>
