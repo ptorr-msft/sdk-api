@@ -53,7 +53,7 @@ ms.custom: 19H1
 ## -description
 
 
-Duplicates an object handle.
+Duplicates an object handle. Duplicating object handles is recommended only between processes with the same privileges. Duplicating handles across privilege levels can introduce security vulnerabilities. See the **Remarks** section for more information.
 
 
 ## -parameters
@@ -68,7 +68,7 @@ A handle to the process with the handle to be duplicated.
 
 
 
-The handle must have the PROCESS_DUP_HANDLE access right. For more information, see 
+The handle must have the **PROCESS_DUP_HANDLE** access right. For more information, see 
 <a href="https://docs.microsoft.com/windows/desktop/ProcThread/process-security-and-access-rights">Process Security and Access Rights</a>.
 
 
@@ -79,7 +79,8 @@ The handle to be duplicated. This is an open object handle that is valid in the 
 
 ### -param hTargetProcessHandle [in]
 
-A handle to the process that is to receive the duplicated handle. The handle must have the PROCESS_DUP_HANDLE access right.
+A handle to the process that is to receive the duplicated handle. The handle must have the **PROCESS_DUP_HANDLE** access right. For more information, see 
+<a href="https://docs.microsoft.com/windows/desktop/ProcThread/process-security-and-access-rights">Process Security and Access Rights</a>.
 
 
 ### -param lpTargetHandle [out]
@@ -101,7 +102,7 @@ The access requested for the new handle. For the flags that can be specified for
 
 
 
-This parameter is ignored if the <i>dwOptions</i> parameter specifies the DUPLICATE_SAME_ACCESS flag. Otherwise, the flags that can be specified depend on the type of object whose handle is to be duplicated.
+This parameter is ignored if the <i>dwOptions</i> parameter specifies the **DUPLICATE_SAME_ACCESS** flag. Otherwise, the flags that can be specified depend on the type of object whose handle is to be duplicated.
 
 
 ### -param bInheritHandle [in]
@@ -127,7 +128,10 @@ Optional actions. This parameter can be zero, or any combination of the followin
 </dl>
 </td>
 <td width="60%">
-Closes the source handle. This occurs regardless of any error status returned.
+Closes the source handle. This occurs regardless of any error status returned. 
+	
+> [!WARNING]
+> Using this flag can cause reliability or security issues in the process specified by <b>hSourceProcessHandle</b>. See the **Remarks** section for more information.
 
 </td>
 </tr>
@@ -138,7 +142,7 @@ Closes the source handle. This occurs regardless of any error status returned.
 </dl>
 </td>
 <td width="60%">
-Ignores the <i>dwDesiredAccess</i> parameter. The duplicate handle has the same access as the source handle.
+	Ignores the <b>dwDesiredAccess</b> parameter. The duplicate handle has the same access as the source handle.
 
 </td>
 </tr>
@@ -160,7 +164,10 @@ If the function fails, the return value is zero. To get extended error informati
 
 ## -remarks
 
+Handles should only be duplicated between two processes at the same privilege level (for example, between two processes running as the same user). Duplicating handles across privilege levels (for example, from a regular user to a service account) can cause security issues and should be avoided unless the implications are fully understood. Objects created with a default security descriptor will prevent duplication across privilege levels. For more information, see 
+<a href="https://docs.microsoft.com/windows/desktop/ProcThread/process-security-and-access-rights">Process Security and Access Rights</a>.
 
+A more reliable, secure way to share object handles across processes is to use RPC and apply the **[system_handle]** attribute on the relevant method parameters. For more information, see <a href="/windows/win32/midl/system-handle">system_handle attribute</a>.
 
 The duplicate handle refers to the same object as the original handle. Therefore, any changes to the object are reflected through both handles. For example, if you duplicate a file handle, the current file position is always the same for both handles. For  file handles to have different file positions, use the <a href="https://docs.microsoft.com/windows/desktop/api/fileapi/nf-fileapi-createfilea">CreateFile</a> function to create file handles that share access to the same file.
 
@@ -354,6 +361,9 @@ Normally the target process closes a duplicated handle when that process is fini
 <li>Set <i>dwOptions</i> to DUPLICATE_CLOSE_SOURCE.</li>
 </ul>
 
+> [!Note] 
+> The **DUPLICATE_CLOSE_SOURCE** flag can close *any* handle inside the process specified by **hSourceProcessHandle**; it does not have to be a handle that was previously duplicated into the calling process. Unexpectedly closing a handle can cause reliability or security issues in the source process, so avoid using this flag unless you are sure the source process is expecting you to close the handle. Typically, you should rely on the target process to close the handle.
+
 #### Examples
 
 The following example creates a mutex, duplicates a handle to the mutex, and passes it to another thread. Duplicating the handle ensures that the reference count is increased so that the mutex object will not be destroyed until both threads have closed the handle.
@@ -366,11 +376,18 @@ DWORD CALLBACK ThreadProc(PVOID pvParam);
 
 int main()
 {
-    HANDLE hMutex = CreateMutex(NULL, FALSE, NULL);
-    HANDLE hMutexDup, hThread;
+    HANDLE hMutex, hMutexDup, hThread;
     DWORD dwThreadId;
 
-    DuplicateHandle(GetCurrentProcess(), 
+    hMutex = CreateMutex(NULL, FALSE, NULL);
+    if (NULL == hMutex)
+    {
+      // Handle error here
+      OutputDebugStringW(L"CreateMutex failed.");
+      return 1;
+    }
+    
+    BOOL result = DuplicateHandle(GetCurrentProcess(), 
                     hMutex, 
                     GetCurrentProcess(),
                     &hMutexDup, 
@@ -378,9 +395,23 @@ int main()
                     FALSE,
                     DUPLICATE_SAME_ACCESS);
 
+    if (FALSE == result)
+    {
+      // Handle error here
+      OutputDebugStringW(L"DuplicateHandle failed.");
+      return 2;
+    }      
+
     hThread = CreateThread(NULL, 0, ThreadProc, 
         (LPVOID) hMutexDup, 0, &dwThreadId);
 
+    if (NULL == hThread)
+    {
+      // Handle error here
+      OutputDebugStringW(L"CreateThread failed.");
+      return 3;
+    }      
+    
     // Perform work here, closing the handle when finished with the
     // mutex. If the reference count is zero, the object is destroyed.
     CloseHandle(hMutex);
