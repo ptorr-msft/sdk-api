@@ -352,7 +352,7 @@ The <i>dwDesiredAccess</i> parameter specifies the new handle's access rights. A
 In some cases, the new handle can have more access rights than the original handle. However, in other cases, 
 <b>DuplicateHandle</b> cannot create a handle with more access rights than the original. For example, a file handle created with the GENERIC_READ access right cannot be duplicated so that it has both the GENERIC_READ and GENERIC_WRITE access right.
 
-Normally the target process closes a duplicated handle when that process is finished using the handle. To close a duplicated handle from the source process,  call <b>DuplicateHandle</b> with the following parameters: 
+Normally the target process closes the duplicate handle when that process is finished using the handle. To close a duplicated handle from the source process,  call <b>DuplicateHandle</b> with the following parameters: 
 
 <ul>
 <li>Set <i>hSourceProcessHandle</i> to the target process from the <b>DuplicateHandle</b> call that created the handle.</li>
@@ -362,7 +362,7 @@ Normally the target process closes a duplicated handle when that process is fini
 </ul>
 
 > [!Note] 
-> The **DUPLICATE_CLOSE_SOURCE** flag can close *any* handle inside the process specified by **hSourceProcessHandle**; it does not have to be a handle that was previously duplicated into the calling process. Unexpectedly closing a handle can cause reliability or security issues in the source process, so avoid using this flag unless you are sure the source process is expecting you to close the handle. As noted above, normally the target process closes the handle via **CloseHandle** when it no longer needs the handle.
+> The **DUPLICATE_CLOSE_SOURCE** flag can close *any* handle inside the process specified by **hSourceProcessHandle**; it does not have to be a handle that was previously duplicated into the calling process. Unexpectedly closing a handle can cause reliability or security issues in the source process, so avoid using this flag unless you are sure the source process is expecting you to close the handle. As noted above, normally the target process closes the duplicate handle via **CloseHandle** when it no longer needs the handle.
 
 #### Examples
 
