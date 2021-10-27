@@ -167,7 +167,7 @@ If the function fails, the return value is zero. To get extended error informati
 Handles should only be duplicated between two processes at the same privilege level (for example, between two processes running as the same user). Duplicating handles across privilege levels (for example, from a regular user to a service account) can cause security issues and should be avoided unless the implications are fully understood. Objects created with a default security descriptor will prevent duplication across privilege levels. For more information, see 
 <a href="https://docs.microsoft.com/windows/desktop/ProcThread/process-security-and-access-rights">Process Security and Access Rights</a>.
 
-A more reliable, secure way to share object handles across processes is to use RPC and apply the **[system_handle]** attribute on the relevant method parameters. For more information, see <a href="/windows/win32/midl/system-handle">system_handle attribute</a>.
+A more reliable, secure way to share object handles across processes is to use COM or RPC and apply the **[system_handle]** attribute on the relevant method parameters. For more information, see <a href="/windows/win32/midl/system-handle">system_handle attribute</a>.
 
 The duplicate handle refers to the same object as the original handle. Therefore, any changes to the object are reflected through both handles. For example, if you duplicate a file handle, the current file position is always the same for both handles. For  file handles to have different file positions, use the <a href="https://docs.microsoft.com/windows/desktop/api/fileapi/nf-fileapi-createfilea">CreateFile</a> function to create file handles that share access to the same file.
 
