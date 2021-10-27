@@ -362,7 +362,7 @@ Normally the target process closes a duplicated handle when that process is fini
 </ul>
 
 > [!Note] 
-> The **DUPLICATE_CLOSE_SOURCE** flag can close *any* handle inside the process specified by **hSourceProcessHandle**; it does not have to be a handle that was previously duplicated into the calling process. Unexpectedly closing a handle can cause reliability or security issues in the source process, so avoid using this flag unless you are sure the source process is expecting you to close the handle. Typically, you should rely on the target process to close the handle.
+> The **DUPLICATE_CLOSE_SOURCE** flag can close *any* handle inside the process specified by **hSourceProcessHandle**; it does not have to be a handle that was previously duplicated into the calling process. Unexpectedly closing a handle can cause reliability or security issues in the source process, so avoid using this flag unless you are sure the source process is expecting you to close the handle. As noted above, normally the target process closes the handle via **CloseHandle** when it no longer needs the handle.
 
 #### Examples
 
