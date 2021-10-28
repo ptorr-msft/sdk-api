@@ -55,7 +55,7 @@ ms.custom: 19H1
 
 Duplicates an object handle. 
 
-Duplicating handles across privilege levels can introduce security vulnerabilities. See the **Remarks** section for more information.
+Duplicating handles across security contexts can introduce security vulnerabilities. See the **Remarks** section for more information.
 
 
 ## -parameters
@@ -171,9 +171,9 @@ If the function fails, the return value is zero. To get extended error informati
 
 The _hSourceProcessHandle_ and the _hTargetProcessHandle_ can refer to arbitrary processes; there is no requirement that the calling process be either the source or the target (although typically it is one or both of them).
 
-In general, handles should only be duplicated between two processes at the same privilege level (for example, between two processes running as the same user). Duplicating handles across privilege levels (for example, from an NT Service to a regular user process) can cause security issues and should be avoided unless the implications are fully understood. Although a higher-privileged process can duplicate objects into or out of lower-privileged processes by default, care must be taken when doing so. When duplicating a handle into a lower-privileged process, ensure the _dwDesiredAccess_ rights grant only the minimum rights needed. When duplicating a handle out of a lower-privileged process, ensure that the object (and any data retrieved from it) remains untrusted. In either case, review your threat model to ensure that the lower-privileged process cannot abuse the handle to attack the higher-privileged process.
+In general, handles should only be duplicated between two processes in the same security context (for example, between two processes running as the same user). Duplicating handles across security contexts (for example, from an NT Service to a regular user process, or between two different users) can cause security issues and should be avoided unless the implications are fully understood. Although a higher-privileged process can duplicate objects into or out of lower-privileged processes by default, care must be taken when doing so. When duplicating a handle into a lower-privileged process, ensure the _dwDesiredAccess_ rights grant only the minimum rights needed. When duplicating a handle out of a lower-privileged process, ensure that the object (and any data retrieved from it) remains untrusted. In either case, review your threat model to ensure that the lower-privileged process cannot abuse the handle to attack the higher-privileged process.
 
-Objects created with a default security descriptor will prevent lower-privileged processes from duplicating handles into or out of higher-privileged processes. For more information, see 
+Objects created with a default security descriptor will prevent lower-privileged processes from duplicating handles into or out of higher-privileged processes or processes running in a different security context. For more information, see 
 <a href="https://docs.microsoft.com/windows/desktop/ProcThread/process-security-and-access-rights">Process Security and Access Rights</a>.
 
 A more reliable, secure way to share object handles across processes is to use COM or RPC and apply the **[system_handle]** attribute on the relevant method parameters. For more information, see <a href="/windows/win32/midl/system-handle">system_handle attribute</a>.
