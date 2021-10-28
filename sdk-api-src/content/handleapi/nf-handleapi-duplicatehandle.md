@@ -319,14 +319,14 @@ Not all "handles" can be duplicated with <b>DuplicateHandle</b>. Only the follow
 </table>
  
 
-You should not use 
-<b>DuplicateHandle</b> to duplicate handles to the following objects:
+You should not use <b>DuplicateHandle</b> to duplicate handles to the following objects:
 
 <ul>
 <li>I/O completion ports. No error is returned, but the duplicate handle cannot be used.</li>
 <li>Sockets. No error is returned, but the duplicate handle may not be recognized by Winsock at the target process. Also, using <b>DuplicateHandle</b> interferes with internal reference counting on the underlying object. To duplicate a socket handle, use the <a href="https://docs.microsoft.com/windows/desktop/api/winsock2/nf-winsock2-wsaduplicatesocketa">WSADuplicateSocket</a> function.</li>
 <li>Pseudo-handles other than the ones returned by the <a href="https://docs.microsoft.com/windows/win32/api/processthreadsapi/nf-processthreadsapi-getcurrentprocess">GetCurrentProcess</a> or <a href="https://docs.microsoft.com/windows/win32/api/processthreadsapi/nf-processthreadsapi-getcurrentthread">GetCurrentThread</a> functions.</li>
 </ul>
+
 The <i>dwDesiredAccess</i> parameter specifies the new handle's access rights. All objects support the <a href="https://docs.microsoft.com/windows/desktop/SecAuthZ/standard-access-rights">standard access rights</a>. Objects may also support additional access rights depending on the object type. For more information, see the following topics:
 
 <ul>
@@ -358,15 +358,15 @@ The <i>dwDesiredAccess</i> parameter specifies the new handle's access rights. A
 <a href="https://docs.microsoft.com/windows/desktop/winstation/window-station-security-and-access-rights">Window-Station Security and Access Rights</a>
 </li>
 </ul>
-In some cases, the new handle can have more access rights than the original handle. However, in other cases, 
-<b>DuplicateHandle</b> cannot create a handle with more access rights than the original. For example, a file handle created with the **GENERIC_READ** access right cannot be duplicated so that it has both the **GENERIC_READ** and **GENERIC_WRITE** access right.
+
+In some cases, the duplicate handle can be granted more access rights than the original handle, but in other cases it cannot. For example, process handles can be duplicated with <b>PROCESS_ALL_ACCESS</b> rights regardless of the original handle's access rights, whereas a file handle created with the <b>GENERIC_READ</b> access right cannot be duplicated so that it has the <b>GENERIC_WRITE</b> access right.
 
 Typically, the process identified by _hSourceProcessHandle_ will close the handle identified by _hSourceHandle_ and the process identified by _hTargetProcessHandle_ will close the handle identified by _lpTargetHandle_. Failure to close both handles will result in the resource leaking until both processes have terminated. See <a href="https://docs.microsoft.com/windows/win32/api/handleapi/nf-handleapi-closehandle">CloseHandle</a> for more information.
 
 **DuplicateHandle** can also be used to close handles, either in the current process or a different process. There is no requirement that the handle being closed has been duplicated; the function can close any handle in any process to which the caller has **PROCESS_DUP_HANDLE** access rights. 
 
 > [!NOTE]
-> You should avoid using this technique to close handles in another process unless the process explicitly expects you to close it, since closing handles unexpectedly can cause reliability or security issues. It is safe to close handles in your own process, but **CloseHandle** is a simpler way to do that.
+> You should avoid using this technique to close a handle in another process unless that process explicitly expects you to do so. Closing handles unexpectedly can cause reliability or security issues. For closing handles in your own process, you can use the simpler **CloseHandle** function instead.
 
 To close a handle using <b>DuplicateHandle</b>, use the following parameters: 
 
