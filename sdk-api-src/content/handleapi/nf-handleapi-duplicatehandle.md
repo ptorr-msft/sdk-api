@@ -53,7 +53,9 @@ ms.custom: 19H1
 ## -description
 
 
-Duplicates an object handle. Duplicating object handles is recommended only between processes with the same privileges. Duplicating handles across privilege levels can introduce security vulnerabilities. See the **Remarks** section for more information.
+Duplicates an object handle. 
+
+Duplicating handles across privilege levels can introduce security vulnerabilities. See the **Remarks** section for more information.
 
 
 ## -parameters
@@ -63,7 +65,7 @@ Duplicates an object handle. Duplicating object handles is recommended only betw
 
 ### -param hSourceProcessHandle [in]
 
-A handle to the process with the handle to be duplicated. 
+A handle to the process with the handle to be duplicated. This could be the calling process or a different process.
 
 
 
@@ -74,25 +76,28 @@ The handle must have the **PROCESS_DUP_HANDLE** access right. For more informati
 
 ### -param hSourceHandle [in]
 
-The handle to be duplicated. This is an open object handle that is valid in the context of the source process. For a list of objects whose handles can be duplicated, see the following Remarks section.
+The handle to be duplicated. This is an open object handle that is valid in the context of the process identified by _hSourceProcessHandle_. For a list of objects whose handles can be duplicated, see the following **Remarks** section.
 
 
 ### -param hTargetProcessHandle [in]
 
-A handle to the process that is to receive the duplicated handle. The handle must have the **PROCESS_DUP_HANDLE** access right. For more information, see 
+A handle to the process that is to receive the duplicated handle. This could be the calling process or a different process.
+
+The handle must have the **PROCESS_DUP_HANDLE** access right. For more information, see 
 <a href="https://docs.microsoft.com/windows/desktop/ProcThread/process-security-and-access-rights">Process Security and Access Rights</a>.
 
 
 ### -param lpTargetHandle [out]
 
-A pointer to a variable that receives the duplicate handle. This handle value is valid in the context of the target process. 
+A pointer to a variable that receives the duplicate handle. If the function succeeds, on exit the handle will be valid in the context of the process identified by _hTargetProcessHandle_. 
 
 
 
 
 If <i>hSourceHandle</i> is a pseudo handle returned by <a href="https://docs.microsoft.com/windows/desktop/api/processthreadsapi/nf-processthreadsapi-getcurrentprocess">GetCurrentProcess</a> or <a href="https://docs.microsoft.com/windows/desktop/api/processthreadsapi/nf-processthreadsapi-getcurrentthread">GetCurrentThread</a>, <b>DuplicateHandle</b> converts it to a real  handle to a process or thread, respectively.
 
-If <i>lpTargetHandle</i> is <b>NULL</b>, the function duplicates the handle, but does not return the duplicate handle value to the caller. This behavior exists only for backward compatibility with previous versions of this function. You should not use this feature, as you will lose system resources until the target process terminates.
+> [!WARNING]
+> If <i>lpTargetHandle</i> is <b>NULL</b>, the function duplicates the handle but does not return the duplicate handle value to the caller. This behavior exists only for backward compatibility. You should not use this feature, as you will lose system resources until the target process terminates.
 
 
 ### -param dwDesiredAccess [in]
@@ -128,10 +133,10 @@ Optional actions. This parameter can be zero, or any combination of the followin
 </dl>
 </td>
 <td width="60%">
-Closes the source handle. This occurs regardless of any error status returned. 
+	Closes the handle specified by <i>hSourceHandle</i>. This occurs regardless of any error status returned. 
 	
 > [!WARNING]
-> Using this flag can cause reliability or security issues in the process specified by <b>hSourceProcessHandle</b>. See the **Remarks** section for more information.
+> Using this flag can cause reliability or security issues. See the **Remarks** section for more information.
 
 </td>
 </tr>
@@ -164,7 +169,11 @@ If the function fails, the return value is zero. To get extended error informati
 
 ## -remarks
 
-Handles should only be duplicated between two processes at the same privilege level (for example, between two processes running as the same user). Duplicating handles across privilege levels (for example, from a regular user to a service account) can cause security issues and should be avoided unless the implications are fully understood. Objects created with a default security descriptor will prevent duplication across privilege levels. For more information, see 
+The _hSourceProcessHandle_ and the _hTargetProcessHandle_ can refer to arbitrary process; there is no requirement that the calling process be either the source or the target (although typically it is one or both of them).
+
+In general, handles should only be duplicated between two processes at the same privilege level (for example, between two processes running as the same user). Duplicating handles across privilege levels (for example, from an NT Service to a regular user process) can cause security issues and should be avoided unless the implications are fully understood. Although a higher-privileged process can duplicate objects into or out of lower-privileged processes by default, care must be taken when doing so. When duplicating a handle into a lower-privileged process, ensure the _dwDesiredAccess_ rights grant only the minimum rights needed. When duplicating a handle out of a lower-privileged process, ensure that the object (and any data retrieved from it) remains untrusted. In either case, review your threat model to ensure that the lower-privileged process cannot abuse the handle to attack the higher-privileged process.
+
+Objects created with a default security descriptor will prevent lower-privileged processes from duplicating handles into or out of higher-privileged processes. For more information, see 
 <a href="https://docs.microsoft.com/windows/desktop/ProcThread/process-security-and-access-rights">Process Security and Access Rights</a>.
 
 A more reliable, secure way to share object handles across processes is to use COM or RPC and apply the **[system_handle]** attribute on the relevant method parameters. For more information, see <a href="/windows/win32/midl/system-handle">system_handle attribute</a>.
@@ -174,12 +183,12 @@ The duplicate handle refers to the same object as the original handle. Therefore
 <b>DuplicateHandle</b> can be called by either the source process or the target process (or a process that is both the source and target process). For example, a process can use 
 <b>DuplicateHandle</b> to create a noninheritable duplicate of an inheritable handle, or a handle with different access than the original handle.
 
-The source process uses the 
-<a href="https://docs.microsoft.com/windows/desktop/api/processthreadsapi/nf-processthreadsapi-getcurrentprocess">GetCurrentProcess</a> function to get a handle to itself. This handle is a pseudo handle, but <b>DuplicateHandle</b> converts it to a real process handle. To get the target process handle, it may be necessary to use some form of interprocess communication (for example, a named pipe or shared memory) to communicate the process identifier to the source process. The source process can use this identifier in the 
-<a href="https://docs.microsoft.com/windows/desktop/api/processthreadsapi/nf-processthreadsapi-openprocess">OpenProcess</a> function to obtain a handle to the target process.
+The calling process can use the 
+<a href="https://docs.microsoft.com/windows/desktop/api/processthreadsapi/nf-processthreadsapi-getcurrentprocess">GetCurrentProcess</a> function to get a handle to itself. This handle is a pseudo handle, but <b>DuplicateHandle</b> converts it to a real process handle. To get a handle to another process, it may be necessary to use some form of interprocess communication (for example, a named pipe or shared memory) to communicate the process identifier. The caller can use this identifier in the 
+<a href="https://docs.microsoft.com/windows/desktop/api/processthreadsapi/nf-processthreadsapi-openprocess">OpenProcess</a> function to obtain a handle to the other process.
 
 If the process that calls 
-<b>DuplicateHandle</b> is not also the target process, the source process must use interprocess communication to pass the value of the duplicate handle to the target process.
+<b>DuplicateHandle</b> is not also the target process, it must use interprocess communication to pass the value of the duplicate handle to the target process.
 
 <b>DuplicateHandle</b> can be used to duplicate a handle between a 32-bit process and a 64-bit process. The resulting handle is appropriately sized to work in the target process. For more information, see <a href="https://docs.microsoft.com/windows/desktop/WinProg64/process-interoperability">Process Interoperability</a>.
 
@@ -350,19 +359,24 @@ The <i>dwDesiredAccess</i> parameter specifies the new handle's access rights. A
 </li>
 </ul>
 In some cases, the new handle can have more access rights than the original handle. However, in other cases, 
-<b>DuplicateHandle</b> cannot create a handle with more access rights than the original. For example, a file handle created with the GENERIC_READ access right cannot be duplicated so that it has both the GENERIC_READ and GENERIC_WRITE access right.
+<b>DuplicateHandle</b> cannot create a handle with more access rights than the original. For example, a file handle created with the **GENERIC_READ** access right cannot be duplicated so that it has both the **GENERIC_READ** and **GENERIC_WRITE** access right.
 
-Normally the target process closes the duplicate handle when that process is finished using the handle. To close a duplicated handle from the source process,  call <b>DuplicateHandle</b> with the following parameters: 
+Typically, the process identified by _hSourceProcessHandle_ will close the handle identified by _hSourceHandle_ and the process identified by _hTargetProcessHandle_ will close the handle identified by _lpTargetHandle_. Failure to close both handles will result in the resource leaking until both processes have terminated. See <a href="https://docs.microsoft.com/windows/win32/api/handleapi/nf-handleapi-closehandle">CloseHandle</a> for more information.
+
+**DuplicateHandle** can also be used to close handles, either in the current process or a different process. There is no requirement that the handle being closed has been duplicated; the function can close any handle in any process to which the caller has **PROCESS_DUP_HANDLE** access rights. 
+
+> [!NOTE]
+> You should avoid using this technique to close handles in another process unless the process explicitly expects you to close it, since closing handles unexpectedly can cause reliability or security issues. It is safe to close handles in your own process, but **CloseHandle** is a simpler way to do that.
+
+To close a handle using <b>DuplicateHandle</b>, use the following parameters: 
 
 <ul>
-<li>Set <i>hSourceProcessHandle</i> to the target process from the <b>DuplicateHandle</b> call that created the handle.</li>
-<li>Set <i>hSourceHandle</i> to the duplicated handle to close.</li>
+<li>Set <i>hSourceProcessHandle</i> to the process which owns the handle to be closed.</li>
+<li>Set <i>hSourceHandle</i> to the handle to close.</li>
+<li>Set <i>hTargetProcessHandle</i> to <b>NULL</b>.</li>
 <li>Set <i>lpTargetHandle</i> to <b>NULL</b>.</li>
-<li>Set <i>dwOptions</i> to DUPLICATE_CLOSE_SOURCE.</li>
+<li>Set <i>dwOptions</i> to <b>DUPLICATE_CLOSE_SOURCE</b>.</li>
 </ul>
-
-> [!Note] 
-> The **DUPLICATE_CLOSE_SOURCE** flag can close *any* handle inside the process specified by **hSourceProcessHandle**; it does not have to be a handle that was previously duplicated into the calling process. Unexpectedly closing a handle can cause reliability or security issues in the source process, so avoid using this flag unless you are sure the source process is expecting you to close the handle. As noted above, normally the target process closes the duplicate handle via **CloseHandle** when it no longer needs the handle.
 
 #### Examples
 
@@ -382,7 +396,6 @@ int main()
     hMutex = CreateMutex(NULL, FALSE, NULL);
     if (NULL == hMutex)
     {
-      // Handle error here
       OutputDebugStringW(L"CreateMutex failed.");
       return 1;
     }
@@ -397,7 +410,7 @@ int main()
 
     if (FALSE == result)
     {
-      // Handle error here
+      // Cleanup of other resources omitted.
       OutputDebugStringW(L"DuplicateHandle failed.");
       return 2;
     }      
@@ -407,7 +420,7 @@ int main()
 
     if (NULL == hThread)
     {
-      // Handle error here
+      // Cleanup of other resources omitted.
       OutputDebugStringW(L"CreateThread failed.");
       return 3;
     }      
