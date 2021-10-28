@@ -55,7 +55,7 @@ ms.custom: 19H1
 
 Duplicates an object handle. 
 
-Duplicating handles across security contexts can introduce security vulnerabilities. See the **Remarks** section for more information.
+See the **Remarks** section for important security information.
 
 
 ## -parameters
