@@ -363,10 +363,10 @@ In some cases, the duplicate handle can be granted more access rights than the o
 
 Typically, the process identified by _hSourceProcessHandle_ will close the handle identified by _hSourceHandle_ and the process identified by _hTargetProcessHandle_ will close the handle identified by _lpTargetHandle_. Failure to close both handles will result in the resource leaking until both processes have terminated. See <a href="https://docs.microsoft.com/windows/win32/api/handleapi/nf-handleapi-closehandle">CloseHandle</a> for more information.
 
-**DuplicateHandle** can also be used to close handles, either in the current process or a different process. There is no requirement that the handle being closed has been duplicated; the function can close any handle in any process to which the caller has **PROCESS_DUP_HANDLE** access rights. 
+**DuplicateHandle** can also be used to close handles, either in the current process or a different process. There is no requirement that the handle being closed has been duplicated; the function can close any handle in any process to which the caller has **PROCESS_DUP_HANDLE** access rights. Closing a handle does not guarantee the object will be released or be inaccessible to the target process; it may have made its own duplicate copy to maintain access to the object.
 
 > [!NOTE]
-> You should avoid using this technique to close a handle in another process unless that process explicitly expects you to do so. Closing handles unexpectedly can cause reliability or security issues. For closing handles in your own process, you can use the simpler **CloseHandle** function instead.
+> You should avoid using this technique to close a handle in another process unless that process explicitly expects you to do so. Closing handles unexpectedly can cause reliability or security issues. For closing handles in your own process, you can use the simpler **CloseHandle** function instead. 
 
 To close a handle using <b>DuplicateHandle</b>, use the following parameters: 
 
