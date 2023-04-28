@@ -63,8 +63,8 @@ The <b>FWPS_INCOMING_VALUES0</b> structure defines data values that are passed b
 
 The run-time filtering layer identifier for the filtering layer at which the data values were
      obtained. For more information, see 
-     <a href="/windows/desktop/FWP/management-filtering-layer-identifiers-">Run-time Filtering Layer
-     Identifiers</a>.
+     <a href="/windows-hardware/drivers/network/run-time-filtering-layer-identifiers">Run-time Filtering Layer
+     Identifiers</a>. Note these are the `FWPS...` constants, not the `FWPM...` constants (which are GUIDs).
 
 ### -field valueCount
 
@@ -81,14 +81,9 @@ A pointer to an array of
 
 ## -remarks
 
-The filter engine passes a pointer to an FWPS_INCOMING_VALUES0 structure to a callout's 
-
-    <a href="https://docs.microsoft.com/windows-hardware/drivers/ddi/content/fwpsk/nc-fwpsk-fwps_callout_classify_fn0">classifyFn</a> callout function. 
+The filter engine passes a pointer to an FWPS_INCOMING_VALUES0 structure to a callout's [classifyFn](/windows-hardware/drivers/ddi/content/fwpsk/nc-fwpsk-fwps_callout_classify_fn0) callout function. 
     The values in this array depend on the **layerId**; each layer has an associated set of available indexes as outlined in the **FWPS_FIELDS_&lt;LAYER_ID&gt;** enumerations. 
     For example, for the **ALE_AUTH_CONNECT_V4** layer, the available indexes are listed in the [FWPS_FIELDS_ALE_AUTH_CONNECT_V4 enumeration](windows-hardware/drivers/ddi/fwpsk/ne-fwpsk-fwps_fields_ale_auth_connect_v4_). 
-
-
-
 
 
 ## -see-also
